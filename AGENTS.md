@@ -97,3 +97,5 @@ Shared rules for all agents:
   `SECURITY_FINAL_REPORT.md`, `SEO_REPORT.md`, `ACCESSIBILITY_REPORT.md`,
   `PERFORMANCE_REPORT.md`) must be based on actual tool output (osv-scanner,
   Lighthouse, build output), not estimates.
+- **Codex**: keep context windows focused — if modifying styling, provide
+  both the component and `tailwind.config.mjs` context.

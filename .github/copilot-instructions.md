@@ -4,6 +4,12 @@ This is an **Astro 5** project deployed to **Cloudflare Workers** (SSR adapter `
 
 For full project rules, non-negotiables, and the deploy gate, see `AGENTS.md` in the repository root. This file summarizes the points most relevant to Copilot's code-completion and chat suggestions.
 
+## Non-negotiables (see `AGENTS.md` for full list)
+
+- Do not mutate or replace the live WordPress site (`hsb-boden.de`) from this repo.
+- Do not claim Argelith/Zahna certification, partnership, or endorsement unless documented and approved.
+- Do not publish exact customer locations, logos, or names without explicit approval.
+
 ## Critical priorities
 
 - **SEO is critical.** This site relies on organic search traffic for lead generation.
