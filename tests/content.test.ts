@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   getAllPublicPages,
   getPublicReferences,
+  getReferencesForSlugs,
   validateSiteContent,
 } from "../src/lib/content";
 import { services } from "../src/data/services";
@@ -128,4 +129,30 @@ describe("content hardening (Phase 1)", () => {
     const a = articles.find((x) => x.slug === "warum-industrieboeden-in-molkereien-versagen")!;
     expect(JSON.stringify(a.sections)).toMatch(/Epoxidharz/);
   });
+  it("filters references correctly by slugs", () => {
+    const references = getPublicReferences();
+    if (references.length < 2) {
+      console.warn("Not enough references to run getReferencesForSlugs test properly");
+      return;
+    }
+
+    const firstRef = references[0];
+    const secondRef = references[1];
+
+    // Test with existing slugs
+    const filtered = getReferencesForSlugs([firstRef.id, secondRef.id]);
+    expect(filtered.length).toBe(2);
+    expect(filtered.map(r => r.id)).toContain(firstRef.id);
+    expect(filtered.map(r => r.id)).toContain(secondRef.id);
+
+    // Test with invalid slugs
+    const filteredWithInvalid = getReferencesForSlugs([firstRef.id, "invalid-slug-123"]);
+    expect(filteredWithInvalid.length).toBe(1);
+    expect(filteredWithInvalid[0].id).toBe(firstRef.id);
+
+    // Test with empty array
+    const filteredEmpty = getReferencesForSlugs([]);
+    expect(filteredEmpty.length).toBe(0);
+  });
+
 });
