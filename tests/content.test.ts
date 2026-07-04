@@ -5,6 +5,7 @@ import {
   getAllPublicPages,
   getPublicReferences,
   validateSiteContent,
+  getServiceBySlug,
 } from "../src/lib/content";
 import { services } from "../src/data/services";
 import { industries } from "../src/data/industries";
@@ -88,6 +89,24 @@ describe("site content contract", () => {
       expect(marker.lat).toBeGreaterThanOrEqual(germanyMapBounds.minLat);
       expect(marker.lat).toBeLessThanOrEqual(germanyMapBounds.maxLat);
     }
+  });
+});
+
+
+describe("getServiceBySlug", () => {
+  it("returns the correct service for a valid slug", () => {
+    // Find a known valid slug from the imported services
+    const validService = services[0];
+    const result = getServiceBySlug(validService.slug);
+
+    expect(result).toBeDefined();
+    expect(result?.slug).toBe(validService.slug);
+    expect(result).toEqual(validService);
+  });
+
+  it("returns undefined for an invalid slug", () => {
+    const result = getServiceBySlug("invalid-service-slug-12345");
+    expect(result).toBeUndefined();
   });
 });
 
