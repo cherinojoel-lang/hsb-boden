@@ -5,6 +5,9 @@ import {
   getAllPublicPages,
   getPublicReferences,
   validateSiteContent,
+  getServices,
+  getIndustries,
+  getArticles,
 } from "../src/lib/content";
 import { services } from "../src/data/services";
 import { industries } from "../src/data/industries";
@@ -127,5 +130,19 @@ describe("content hardening (Phase 1)", () => {
   it("molkerei-artikel nennt Epoxidharz gegen Milchsäure", () => {
     const a = articles.find((x) => x.slug === "warum-industrieboeden-in-molkereien-versagen")!;
     expect(JSON.stringify(a.sections)).toMatch(/Epoxidharz/);
+  });
+});
+
+describe("data getters", () => {
+  it("getServices returns the services array", () => {
+    expect(getServices()).toBe(services);
+  });
+
+  it("getIndustries returns the industries array", () => {
+    expect(getIndustries()).toBe(industries);
+  });
+
+  it("getArticles returns the articles array", () => {
+    expect(getArticles()).toBe(articles);
   });
 });
