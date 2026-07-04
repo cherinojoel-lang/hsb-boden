@@ -5,6 +5,9 @@ import {
   getAllPublicPages,
   getPublicReferences,
   validateSiteContent,
+  getServices,
+  getIndustries,
+  getArticles,
 } from "../src/lib/content";
 import { services } from "../src/data/services";
 import { industries } from "../src/data/industries";
@@ -127,5 +130,31 @@ describe("content hardening (Phase 1)", () => {
   it("molkerei-artikel nennt Epoxidharz gegen Milchsäure", () => {
     const a = articles.find((x) => x.slug === "warum-industrieboeden-in-molkereien-versagen")!;
     expect(JSON.stringify(a.sections)).toMatch(/Epoxidharz/);
+  });
+});
+
+describe("data access functions", () => {
+  it("getServices returns a non-empty array of services", () => {
+    const result = getServices();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toHaveProperty("slug");
+    expect(result[0]).toHaveProperty("h1");
+  });
+
+  it("getIndustries returns a non-empty array of industries", () => {
+    const result = getIndustries();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toHaveProperty("slug");
+    expect(result[0]).toHaveProperty("h1");
+  });
+
+  it("getArticles returns a non-empty array of articles", () => {
+    const result = getArticles();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0]).toHaveProperty("slug");
+    expect(result[0]).toHaveProperty("h1");
   });
 });
