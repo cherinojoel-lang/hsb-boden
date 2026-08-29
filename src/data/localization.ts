@@ -16,12 +16,17 @@ export const supportedLanguages: Array<{
 
 const fallbackOrder: LanguageCode[] = ["en", "de", "tr", "pl", "fr", "nl"];
 
+const supportedLanguagesByCode = supportedLanguages.reduce((acc, language) => {
+  acc[language.code] = language;
+  return acc;
+}, {} as Record<string, (typeof supportedLanguages)[number]>);
+
 export function resolveSuggestedLanguages(locale: string | undefined) {
   const normalized = (locale ?? "").toLowerCase();
   const primary = normalized.split("-")[0] as LanguageCode;
-  const direct = supportedLanguages.find((language) => language.code === primary);
+  const direct = supportedLanguagesByCode[primary];
   const order = direct ? [direct.code, ...fallbackOrder.filter((code) => code !== direct.code)] : fallbackOrder;
   return order
-    .map((code) => supportedLanguages.find((language) => language.code === code))
+    .map((code) => supportedLanguagesByCode[code])
     .filter((language): language is (typeof supportedLanguages)[number] => Boolean(language));
 }
