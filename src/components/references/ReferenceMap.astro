@@ -32,10 +32,25 @@ const project = (lat: number, lng: number) => ({
   y: 4 + ((germanyMapBounds.maxLat - lat) / (germanyMapBounds.maxLat - germanyMapBounds.minLat)) * (germanyMapViewBox.height - 8),
 });
 
-const points = references.map((reference) => ({
-  ...reference,
-  ...project(reference.lat, reference.lng),
-}));
+// Regionen deduplizieren: kollidierende Inline-Labels auf der Karte ersetzen wir
+// durch eine saubere Chip-Liste. Freigegebene exakte Standorte zuerst.
+const exactRegions = new Set<string>();
+const otherRegions = new Set<string>();
+
+const points = references.reduce<Array<ReferenceItem & { x: number; y: number }>>((acc, reference) => {
+  if (reference.canShowExactLocation) {
+    exactRegions.add(reference.displayLocation);
+  } else {
+    otherRegions.add(reference.displayLocation);
+  }
+
+  acc.push({
+    ...reference,
+    ...project(reference.lat, reference.lng),
+  });
+
+  return acc;
+}, []);
 
 const clientPoints = clients.map((client) => ({
   ...client,
@@ -63,17 +78,7 @@ const coveragePoints = germanyTrustMarkers.map((marker) => ({
   ...(labelOffsets[marker.city] ?? { dx: 2, dy: 0, anchor: "start" as const }),
 }));
 
-// Regionen deduplizieren: kollidierende Inline-Labels auf der Karte ersetzen wir
-// durch eine saubere Chip-Liste. Freigegebene exakte Standorte zuerst.
-const exactRegions = new Set<string>();
-const otherRegions = new Set<string>();
-for (const reference of references) {
-  if (reference.canShowExactLocation) {
-    exactRegions.add(reference.displayLocation);
-  } else {
-    otherRegions.add(reference.displayLocation);
-  }
-}
+
 
 const regions: { label: string; exact: boolean }[] = [];
 for (const label of exactRegions) {
