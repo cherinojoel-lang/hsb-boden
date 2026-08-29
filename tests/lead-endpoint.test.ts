@@ -18,8 +18,9 @@ const validBody = {
   legalBasis: "inquiry",
 };
 
-function makeRequest(body: unknown, opts: { ip?: string; origin?: string; method?: string } = {}) {
-  const { ip = "203.0.113.1", origin = "https://hsb-boden.de", method = "POST" } = opts;
+function makeRequest(body: unknown, opts: { ip?: string; origin?: string; method?: string; rawBody?: string } = {}) {
+  const { ip = "203.0.113.1", origin = "https://hsb-boden.de", method = "POST", rawBody } = opts;
+  const finalBody = rawBody !== undefined ? rawBody : (method === "GET" ? undefined : JSON.stringify(body));
   return new Request("https://hsb-boden.de/api/lead", {
     method,
     headers: {
@@ -27,7 +28,7 @@ function makeRequest(body: unknown, opts: { ip?: string; origin?: string; method
       "CF-Connecting-IP": ip,
       Origin: origin,
     },
-    body: method === "GET" ? undefined : JSON.stringify(body),
+    body: finalBody,
   });
 }
 
@@ -58,6 +59,13 @@ describe("POST /api/lead", () => {
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(JSON.stringify(json)).not.toMatch(/webhook|n8n|stack/i);
+  });
+
+  it("returns 400 on invalid json payload", async () => {
+    const res = await POST(makeContext(makeRequest(undefined, { rawBody: "{bad}" })));
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json).toEqual({ ok: false, error: "invalid_json" });
   });
 
   it("silently rejects a filled honeypot without calling the webhook", async () => {
