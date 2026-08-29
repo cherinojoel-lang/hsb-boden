@@ -25,7 +25,12 @@ export function resetLeadRateLimiter() {
   emailHits = new Map();
 }
 
-function isRateLimited(key: string, store: Map<string, number[]>, limit: { max: number; windowMs: number }, now: number) {
+function isRateLimited(
+  key: string,
+  store: Map<string, number[]>,
+  limit: { max: number; windowMs: number },
+  now: number,
+) {
   const hits = (store.get(key) ?? []).filter((t) => now - t < limit.windowMs);
   hits.push(now);
   store.set(key, hits);
@@ -41,14 +46,20 @@ function corsHeaders(origin: string | null) {
 }
 
 function jsonResponse(status: number, body: unknown, origin: string | null) {
-  return new Response(JSON.stringify(body), { status, headers: corsHeaders(origin) });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: corsHeaders(origin),
+  });
 }
 
 class PayloadTooLargeError extends Error {}
 
 // Liest den Body in begrenzten Chunks, statt unbegrenzt zu puffern (vermeidet
 // Memory-Exhaustion bei einem Request ohne/mit gefaelschtem Content-Length).
-async function readBodyWithLimit(request: Request, limitBytes: number): Promise<string> {
+async function readBodyWithLimit(
+  request: Request,
+  limitBytes: number,
+): Promise<string> {
   const reader = request.body?.getReader();
   if (!reader) return "";
   const chunks: Uint8Array[] = [];
@@ -79,6 +90,11 @@ function concatChunks(chunks: Uint8Array[]): Uint8Array {
 
 export async function OPTIONS({ request }: APIContext) {
   const origin = request.headers.get("Origin");
+
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    return jsonResponse(403, { ok: false, error: "forbidden_origin" }, origin);
+  }
+
   const headers = corsHeaders(origin);
   headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
   headers.set("Access-Control-Allow-Headers", "Content-Type");
@@ -86,7 +102,11 @@ export async function OPTIONS({ request }: APIContext) {
 }
 
 export async function GET({ request }: APIContext) {
-  return jsonResponse(405, { ok: false, error: "method_not_allowed" }, request.headers.get("Origin"));
+  return jsonResponse(
+    405,
+    { ok: false, error: "method_not_allowed" },
+    request.headers.get("Origin"),
+  );
 }
 export const PUT = GET;
 export const DELETE = GET;
@@ -109,7 +129,11 @@ export async function POST(context: APIContext) {
     rawBody = await readBodyWithLimit(request, MAX_PAYLOAD_BYTES);
   } catch (err) {
     if (err instanceof PayloadTooLargeError) {
-      return jsonResponse(413, { ok: false, error: "payload_too_large" }, origin);
+      return jsonResponse(
+        413,
+        { ok: false, error: "payload_too_large" },
+        origin,
+      );
     }
     return jsonResponse(400, { ok: false, error: "invalid_body" }, origin);
   }
@@ -129,7 +153,10 @@ export async function POST(context: APIContext) {
 
   const now = Date.now();
   const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
-  if (isRateLimited(ip, ipHits, IP_LIMIT, now) || isRateLimited(lead.email, emailHits, EMAIL_LIMIT, now)) {
+  if (
+    isRateLimited(ip, ipHits, IP_LIMIT, now) ||
+    isRateLimited(lead.email, emailHits, EMAIL_LIMIT, now)
+  ) {
     return jsonResponse(429, { ok: false, error: "rate_limited" }, origin);
   }
 
@@ -147,10 +174,26 @@ export async function POST(context: APIContext) {
     });
     clearTimeout(timeout);
   } catch {
-    console.error(JSON.stringify({ ts: new Date(now).toISOString(), result: "error", code: "webhook_unreachable" }));
-    return jsonResponse(502, { ok: false, error: "webhook_unreachable" }, origin);
+    console.error(
+      JSON.stringify({
+        ts: new Date(now).toISOString(),
+        result: "error",
+        code: "webhook_unreachable",
+      }),
+    );
+    return jsonResponse(
+      502,
+      { ok: false, error: "webhook_unreachable" },
+      origin,
+    );
   }
 
-  console.log(JSON.stringify({ ts: new Date(now).toISOString(), result: "ok", emailDomain: lead.email.split("@")[1] }));
+  console.log(
+    JSON.stringify({
+      ts: new Date(now).toISOString(),
+      result: "ok",
+      emailDomain: lead.email.split("@")[1],
+    }),
+  );
   return jsonResponse(200, { ok: true }, origin);
 }
