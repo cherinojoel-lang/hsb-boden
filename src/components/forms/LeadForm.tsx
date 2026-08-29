@@ -8,71 +8,25 @@ type Status = "idle" | "submitting" | "error";
 // Online-Versand nur aktiv, wenn der serverseitige Lead-Endpoint konfiguriert ist.
 const deliveryConfigured = Boolean(site.hasLeadEndpoint);
 
-export function LeadForm() {
-  const [started, setStarted] = useState(false);
-  const [status, setStatus] = useState<Status>("idle");
-
-  function onFocus() {
-    if (!started) {
-      setStarted(true);
-      trackEvent(TrackingEvent.LeadFormStart);
-    }
-  }
-
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!deliveryConfigured) return;
-
-    const form = event.currentTarget;
-    const fd = new FormData(form);
-    const payload: Record<string, unknown> = {
-      source: "website",
-      legalBasis: "inquiry",
-      firstName: fd.get("firstName"),
-      lastName: fd.get("lastName"),
-      company: fd.get("company"),
-      email: fd.get("email"),
-      phone: fd.get("phone"),
-      industry: fd.get("industry"),
-      projectType: fd.get("projectType"),
-      areaSize: fd.get("areaSize") ?? "",
-      liveOperation: fd.get("liveOperation"),
-      loads: fd.getAll("loads"),
-      message: fd.get("message"),
-      privacyConsent: fd.get("privacyConsent") === "on",
-    };
-
-    setStatus("submitting");
-    try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`Status ${res.status}`);
-      trackEvent(TrackingEvent.LeadFormSubmit);
-      window.location.href = "/danke-projektanfrage/";
-    } catch {
-      setStatus("error");
-    }
-  }
-
+function ContactFallback() {
   return (
-    <form className="surface grid gap-4 p-5" onSubmit={onSubmit} onFocus={onFocus}>
-      {!deliveryConfigured ? (
-        <div className="rounded border border-hsb-red/30 bg-hsb-red/5 p-4 text-sm leading-6 text-hsb-black">
-          <p className="font-black">Direkter Draht ins Projektgeschäft</p>
-          <p className="mt-1 text-hsb-steel">
-            Für eine schnelle Ersteinschätzung erreichen Sie HSB direkt:
-          </p>
-          <p className="mt-2 font-bold">
-            <a className="text-hsb-red hover:underline" href={`tel:${site.phone.replace(/[^+\d]/g, "")}`}>{site.phone}</a>
-            <span className="mx-2 text-hsb-line">·</span>
-            <a className="text-hsb-red hover:underline" href={`mailto:${site.email}`}>{site.email}</a>
-          </p>
-        </div>
-      ) : null}
+    <div className="rounded border border-hsb-red/30 bg-hsb-red/5 p-4 text-sm leading-6 text-hsb-black">
+      <p className="font-black">Direkter Draht ins Projektgeschäft</p>
+      <p className="mt-1 text-hsb-steel">
+        Für eine schnelle Ersteinschätzung erreichen Sie HSB direkt:
+      </p>
+      <p className="mt-2 font-bold">
+        <a className="text-hsb-red hover:underline" href={`tel:${site.phone.replace(/[^+\d]/g, "")}`}>{site.phone}</a>
+        <span className="mx-2 text-hsb-line">·</span>
+        <a className="text-hsb-red hover:underline" href={`mailto:${site.email}`}>{site.email}</a>
+      </p>
+    </div>
+  );
+}
 
+function LeadFormFields() {
+  return (
+    <>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="grid gap-2 text-sm font-bold">
           Vorname
@@ -155,6 +109,64 @@ export function LeadForm() {
         <input required type="checkbox" name="privacyConsent" className="mt-1" />
         Ich stimme zu, dass meine Angaben zur Bearbeitung der Anfrage verarbeitet werden.
       </label>
+    </>
+  );
+}
+
+export function LeadForm() {
+  const [started, setStarted] = useState(false);
+  const [status, setStatus] = useState<Status>("idle");
+
+  function onFocus() {
+    if (!started) {
+      setStarted(true);
+      trackEvent(TrackingEvent.LeadFormStart);
+    }
+  }
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!deliveryConfigured) return;
+
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+    const payload: Record<string, unknown> = {
+      source: "website",
+      legalBasis: "inquiry",
+      firstName: fd.get("firstName"),
+      lastName: fd.get("lastName"),
+      company: fd.get("company"),
+      email: fd.get("email"),
+      phone: fd.get("phone"),
+      industry: fd.get("industry"),
+      projectType: fd.get("projectType"),
+      areaSize: fd.get("areaSize") ?? "",
+      liveOperation: fd.get("liveOperation"),
+      loads: fd.getAll("loads"),
+      message: fd.get("message"),
+      privacyConsent: fd.get("privacyConsent") === "on",
+    };
+
+    setStatus("submitting");
+    try {
+      const res = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      trackEvent(TrackingEvent.LeadFormSubmit);
+      window.location.href = "/danke-projektanfrage/";
+    } catch {
+      setStatus("error");
+    }
+  }
+
+  return (
+    <form className="surface grid gap-4 p-5" onSubmit={onSubmit} onFocus={onFocus}>
+      {!deliveryConfigured ? <ContactFallback /> : null}
+
+      <LeadFormFields />
 
       {status === "error" ? (
         <p className="rounded border border-hsb-red/40 bg-hsb-red/5 px-3 py-2 text-sm text-hsb-red">
