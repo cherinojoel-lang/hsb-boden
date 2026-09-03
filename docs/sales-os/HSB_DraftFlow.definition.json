@@ -1,12 +1,9 @@
 {
   "_kommentar": [
     "Power-Automate-Flow: HSB Sales OS Draft Adapter.",
-    "Genau EINE Outlook-Aktion: DraftEmail (Entwurf erstellen).",
-    "KEINE Sendeaktion. SendEmailV2, SendDraftEmail und Mail.Send duerfen nicht vorkommen.",
-    "Anlegen in der STANDARDUMGEBUNG (Default-8adbbf2e-...).",
-    "NICHT in 67d5e040 (HSB-SALES-OS-DEV): das ist ein Developer-Environment und",
-    "laut Microsoft nur fuer seinen Besitzer gedacht; Joel und Jordi erhalten dort",
-    "beim Anlegen eines Flows einen Berechtigungsfehler.",
+    "Anlegen in der Standardumgebung (Default-8adbbf2e-...), je einmal pro Operator.",
+    "Genau EINE Outlook-Aktion: DraftEmail. Keine Sendeaktion:",
+    "SendEmailV2, SendDraftEmail und Mail.Send duerfen nicht vorkommen.",
     "Der Flow entscheidet nichts: Empfaenger, Text und Flyer kommen fertig aus Apps Script."
   ],
   "definition": {
