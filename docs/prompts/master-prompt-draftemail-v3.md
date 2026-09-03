@@ -1,18 +1,102 @@
 ============================================================
-0. PLACEHOLDERS — FILL BEFORE USE
+0. RESOLVED CONTEXT  (from session artifacts, 2026-09-03)
 ============================================================
-The original master prompt was not available when this revision was
-written. Every <<...>> below is a slot that must be filled from the
-original prompt or from live inspection. Do NOT let the agent guess them.
+Values below are taken from ABSCHLUSS_20260903.md, its independent
+verification (ABSCHLUSS_20260903_VERIFIZIERT.md) and EINRICHTUNG_FINAL.md.
+Each is marked with how strongly it is established. Re-verify anything
+not marked VERIFIED before acting on it.
 
-<<GOLDEN_REFERENCE_FLOW_NAME>>   the known-good production flow
-<<DRAFT_ADAPTER_FLOW_NAME>>      the flow exposing DraftEmail
-<<POWER_PLATFORM_ENV_JORDI>>     Jordi's Home environment
-<<POWER_PLATFORM_ENV_TARGET>>    environment the adapter runs in
-<<APPS_SCRIPT_PROJECT_ID>>       Apps Script domain engine
-<<SHEET_ID_ALL_LEADS>>           Google Sheet, business-data SSOT
-<<HTTP_TRIGGER_URL_OR_REF>>      adapter entry point
-<<HANDOFF_DOC_PATH>>             e.g. project 2.5.md
+  GOLDEN_REFERENCE_FLOW   "HSB Outlook Draft Test" (flow ff3c...)
+                          HISTORICAL: export of 23.08. shows exactly one
+                          action, DraftEmail. No SendEmailV2 /
+                          SendDraftEmail / Mail.Send. READ-ONLY baseline.
+  DRAFT_ADAPTER_FLOW      second flow, HTTP trigger, from
+                          HSB_Sales_OS_Draft_Adapter.zip
+                          UNVERIFIED: export not locatable.
+  MAILBOX_JOEL            j-cherino@HSB-Boden.de      HISTORICAL
+  MAILBOX_JORDI           j-post@hsb-boden.de         pending own flow
+  SHEET_ID_ALL_LEADS      1W-NjwEq0UhDo2TaeS-2qp_qit4YFMz6k-IqKHlPpHmg
+                          VERIFIED: 6424 rows, 3212 Joel / 3212 Jordi.
+  HANDOFF_DOC             Google Doc 1RrWbaMAo1r1_frcGj73SsUma_aBISNdFPAuy_pxnEdk
+                          (28.08.) — architecture decision of record.
+  ADAPTER_URL_PROPERTY    script property HSB_ADAPTER_URL_JORDI
+                          (Joel equivalent set analogously)
+  APPS_SCRIPT_PROJECT_ID  UNRESOLVED — script id was not retrievable via
+                          the Drive connector. Recover it first.
+
+  ENVIRONMENT             *** CONTRADICTION — RESOLVE BEFORE ANY OAUTH ***
+                          EINRICHTUNG_FINAL.md instructs Jordi to authorize
+                          in Default-8adbbf2e-..., explicitly "not
+                          67d5e040-...". The 28.08. handoff names
+                          67d5e040-... as the developer target and contains
+                          the Jordi authorization link pointing there.
+                          Do not send anyone an OAuth link until one
+                          environment is established as canonical by live
+                          readback. Authorizing in the wrong environment
+                          creates a second broken connection.
+
+  SOURCE OF CODE          The Sales OS engine and both flows exist in NO git
+                          repository. Verified by search across
+                          HSBHexagon/hsb-boden and cherinojoel-lang/hsb-boden.
+                          The engine lives only in the Apps Script project.
+                          => Phase A cannot be driven from git. Artifact
+                          recovery is PHASE 0.
+
+  CANONICAL WEBSITE REPO  HSBHexagon/hsb-boden (main, 2026-08-27).
+                          cherinojoel-lang/hsb-boden is a SEPARATE, STALE
+                          copy (main 2026-06-26, no shared history). Its
+                          status documents describe a superseded state.
+                          Never take project state from it.
+
+============================================================
+0b. PHASE 0 — BLOCKERS THAT PRECEDE PHASE A
+============================================================
+Source: independent verification, 2026-09-03.
+Verdict on record: VERIFICATION_RESULT=FAIL_WITH_BLOCKERS,
+SAFE_TO_CREATE_ONE_INTERNAL_DRAFT=NO, SAFE_TO_SEND_PROSPECT_EMAILS=NO,
+PRODUCTION_READY=NO.
+
+Do not create even ONE internal draft until all eight are freshly true:
+
+  B1 ARTIFACTS_AVAILABLE=NO
+     Ten named session files (adapter zip, .gs files, self-check, handoff,
+     proof) are not locatable in Drive. Recover them or re-export the
+     current Apps Script and flow state. Until then nothing is auditable.
+  B2 FULL_TESTS_FRESH_GREEN=NO
+     "25 tests green" and "258 tests" are historical claims with no fresh
+     output. Re-run, capture the log.
+  B3 FLOW_EXPORT_DRAFT_ONLY=NO
+     Need a CURRENT export proving DraftEmail-only AND showing the HTTP
+     trigger's authentication mode.
+  B4 ENVIRONMENT_UNAMBIGUOUS=NO
+     See the CONTRADICTION above. Flow, connection reference and target
+     mailbox must all read back in one named environment.
+  B5 JOEL_GATE_CONSISTENT=NO
+     One Joel record is Versandfreigabe=yes with Legal_Basis=UNKNOWN.
+     The AND-gate may still block it, but the data state is wrong.
+     Clear it before any run.
+  B6 REAL_TEMPLATE_TEXT=NO
+     The only successful draft used placeholder text. The first real test
+     must use the released template and exactly ONE internal recipient.
+  B7 READBACK_VERIFIED=NO
+     draftId, internetMessageId, conversationId, flyer attachment and the
+     sheet write-back must all be read back, not reported.
+  B8 REAL_EXTERNAL_PROSPECT_SEND_COUNT=0
+     Must remain provably zero throughout.
+
+  LEGAL GATE (independent of the technical gates):
+     6204 of 6424 rows are Versandfreigabe=no; 6205 Legal_Basis=UNKNOWN.
+     70 of the Joel review-100 are .ch domains — Swiss UWG Art. 3(1)(o)
+     requires prior consent and is not satisfied by a German section 7(3)
+     classification. Do NOT bulk-set EXISTING_CUSTOMER_7_3. Each contact
+     needs a documented basis under the law that applies to it. This is a
+     legal decision, not an engineering one.
+
+  CONFLICTING INSTRUCTIONS:
+     EINRICHTUNG_FINAL.md describes a daily routine that generates drafts
+     for Joel and Jordi directly. That document predates the verification
+     and must not be followed as an operating procedure. Where the two
+     disagree, the verification governs.
 
 ============================================================
 1. CLAUDE CODE EXECUTION CONTRACT
@@ -67,9 +151,9 @@ Execute in order. Produce output for each step. Do not skip ahead.
 1. Read CLAUDE.md / AGENTS.md / project instructions.
 2. git status --short
 3. Locate the CURRENT Apps Script adapter implementation
-   (<<APPS_SCRIPT_PROJECT_ID>>). Report file + function names.
+   (APPS_SCRIPT_PROJECT_ID, still UNRESOLVED). Report file + function names.
 4. Locate existing Power Platform exports/config if present in repo.
-5. Read <<HANDOFF_DOC_PATH>>.
+5. Read the HANDOFF_DOC named in section 0.
 6. Emit an evidence table: CURRENT vs EXPECTED state, one row per claim,
    each row marked VERIFIED_THIS_SESSION or UNVERIFIED.
 7. Only then propose the minimal mutation.
@@ -103,7 +187,7 @@ After changes:
 ============================================================
 
 - Root cause before fix. No symptom patching.
-- The Golden Reference Flow <<GOLDEN_REFERENCE_FLOW_NAME>> is READ-ONLY.
+- The Golden Reference Flow "HSB Outlook Draft Test" is READ-ONLY.
   It is the comparison baseline, not a work surface.
 - DraftEmail only. Zero send-capable actions on any path touched here.
 - Apps Script remains the DOMAIN ENGINE (eligibility, lead state, business
@@ -111,7 +195,7 @@ After changes:
 - Power Automate remains a thin ADAPTER. No business logic migrates into it.
 - Fresh evidence before any PASS. A gate without an execution timestamp
   from this session is not a gate.
-- Jordi's Home environment <<POWER_PLATFORM_ENV_JORDI>> is the known
+- Jordi's Home environment (see the ENVIRONMENT contradiction in section 0) is the known
   working mailbox boundary. Treat it as load-bearing.
 
 ============================================================
@@ -147,7 +231,7 @@ Do not create hsb_* CRM tables.
 Do not migrate ALL_LEADS into Dataverse.
 Do not duplicate eligibility or lead state in Dataverse.
 
-Google Sheet <<SHEET_ID_ALL_LEADS>> remains the operative business-data
+Google Sheet SHEET_ID_ALL_LEADS (section 0) remains the operative business-data
 SSOT. If you observe flow run history landing in Dataverse, that is
 platform behaviour — it is NOT an invitation to move business data there.
 

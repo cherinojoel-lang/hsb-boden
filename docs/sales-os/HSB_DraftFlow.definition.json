@@ -1,0 +1,105 @@
+{
+  "_kommentar": [
+    "Power-Automate-Flow: HSB Sales OS Draft Adapter.",
+    "Genau EINE Outlook-Aktion: Create_event -> nein, sondern DraftEmail (Entwurf erstellen).",
+    "KEINE Sendeaktion. SendEmailV2, SendDraftEmail und Mail.Send duerfen nicht vorkommen.",
+    "Solution-aware anlegen: Connection Reference statt direkter Connection,",
+    "in Environment HSB-SALES-OS-DEV (67d5e040-da4e-e629-a8c9-9176bd070948).",
+    "Der Flow entscheidet nichts: Empfaenger, Text und Flyer kommen fertig aus Apps Script."
+  ],
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "$connections": { "defaultValue": {}, "type": "Object" }
+    },
+    "triggers": {
+      "manual": {
+        "type": "Request",
+        "kind": "Http",
+        "inputs": {
+          "schema": {
+            "type": "object",
+            "required": ["leadId", "batchId", "to", "subject", "bodyHtml"],
+            "properties": {
+              "leadId":   { "type": "string" },
+              "batchId":  { "type": "string" },
+              "to":       { "type": "string" },
+              "subject":  { "type": "string" },
+              "bodyHtml": { "type": "string" },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["Name", "ContentBytes"],
+                  "properties": {
+                    "Name":         { "type": "string" },
+                    "ContentBytes": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "Entwurf_erstellen": {
+        "type": "OpenApiConnection",
+        "inputs": {
+          "host": {
+            "connectionName": "shared_office365",
+            "operationId": "DraftEmail",
+            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+          },
+          "parameters": {
+            "emailMessage/To": "@triggerBody()?['to']",
+            "emailMessage/Subject": "@triggerBody()?['subject']",
+            "emailMessage/Body": "@triggerBody()?['bodyHtml']",
+            "emailMessage/Importance": "Normal",
+            "emailMessage/Attachments": "@triggerBody()?['attachments']"
+          }
+        },
+        "runAfter": {},
+        "_kommentar_retry": [
+          "Retry bewusst deaktiviert: der Aufruf ist nicht transaktionssicher idempotent.",
+          "Ein Retry nach mehrdeutigem Timeout koennte einen zweiten Entwurf erzeugen.",
+          "Die Wiederholung steuert Apps Script ueber die vorhandene Draft_ID."
+        ],
+        "runtimeConfiguration": {
+          "retryPolicy": { "type": "none" }
+        }
+      },
+      "Antwort": {
+        "type": "Response",
+        "kind": "Http",
+        "runAfter": { "Entwurf_erstellen": ["Succeeded"] },
+        "inputs": {
+          "statusCode": 200,
+          "headers": { "Content-Type": "application/json" },
+          "body": {
+            "status": "DRAFTED",
+            "leadId": "@triggerBody()?['leadId']",
+            "draftId": "@body('Entwurf_erstellen')?['id']",
+            "internetMessageId": "@body('Entwurf_erstellen')?['internetMessageId']",
+            "conversationId": "@body('Entwurf_erstellen')?['conversationId']"
+          }
+        }
+      },
+      "Antwort_Fehler": {
+        "type": "Response",
+        "kind": "Http",
+        "runAfter": { "Entwurf_erstellen": ["Failed", "Skipped", "TimedOut"] },
+        "inputs": {
+          "statusCode": 502,
+          "headers": { "Content-Type": "application/json" },
+          "body": {
+            "status": "DRAFT_FAILED",
+            "leadId": "@triggerBody()?['leadId']",
+            "error": "@result('Entwurf_erstellen')"
+          }
+        }
+      }
+    }
+  }
+}
