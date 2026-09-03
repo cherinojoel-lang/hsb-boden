@@ -6,29 +6,53 @@ FINALISIERUNGSPLAN – 2026-08-28*.
 
 ---
 
-## 1. Korrektur: falsche Umgebung im bisherigen Dokument
+## 1. Umgebung: `Default-8adbbf2e-…` — belegt
 
-`EINRICHTUNG_FINAL.md` weist Jordi an, die Outlook-Verbindung in
-**`Default-8adbbf2e-…`** zu autorisieren, „nicht `67d5e040-…`".
+**Nutze die Standardumgebung `Default-8adbbf2e-…`, nicht `67d5e040-…`.**
 
-**Das ist vertauscht.** Der Handoff vom 28.08. legt fest:
+Eine frühere Fassung dieses Dokuments behauptete das Gegenteil, gestützt auf
+den Handoff vom 28.08. Das war falsch. Beweis aus dem Livesystem:
 
-    Power Platform Environment : HSB-SALES-OS-DEV
-    Environment ID             : 67d5e040-da4e-e629-a8c9-9176bd070948
-    Environment URL            : https://hsbsalesosdev.crm17.dynamics.com/
+    Error: Sie sind nicht berechtigt, Flows in diesem
+    "67d5e040-da4e-e629-a8c9-9176bd070948" zu erstellen. Wechseln Sie zur
+    Standardumgebung oder zu einer Ihrer eigenen Umgebungen, in der Sie
+    über Herstellerberechtigungen verfügen.
 
-Dort liegen Solution, Flow und Connection Reference. `Default-8adbbf2e-…`
-ist die Umgebung des **alten Testflows** vom 23.08.
+Der Fehler tritt bei Joel und bei Jordi gleichermaßen auf.
 
-Der richtige Link für Jordi:
+**Ursache.** `67d5e040` (HSB-SALES-OS-DEV) ist vom Typ **Developer**.
+Microsoft dokumentiert diesen Typ so: *"Developer environments … are special
+environments intended only for use by the owner"*, und *"Security groups can't
+be assigned to developer environments."*
+(learn.microsoft.com/power-platform/admin/environments-overview#environment-types)
 
-    https://make.powerautomate.com/environments/67d5e040-da4e-e629-a8c9-9176bd070948/connections
+Besitzer ist der Admin, der die Umgebung über die Provisioning-API angelegt
+hat — nicht die beiden Operatoren. Ein Developer-Environment ist damit für
+einen Zwei-Personen-Betrieb strukturell ungeeignet. Das lässt sich nicht durch
+Zuweisen der Rolle *Environment Maker* umgehen, und Sicherheitsgruppen stehen
+dort gar nicht zur Verfügung.
 
-Konto: `j-post@hsb-boden.de` → Office 365 Outlook → Verbinden.
+**Warum die Standardumgebung trägt.** Microsoft: *"In Default environments
+with a provisioned Dataverse database, all users automatically become
+environment makers."* Dort lief am 03.09. bereits der erfolgreiche Testflow
+(HTTP 200, echter Entwurf mit Flyer).
 
-Wird nach dem alten Dokument autorisiert, entsteht eine Verbindung in der
-falschen Umgebung, der solution-aware Flow bleibt unverbunden, und der
-Fehler sieht aus wie ein Connector-Problem.
+Autorisierung und Flow-Anlage also hier:
+
+    https://make.powerautomate.com/environments/Default-8adbbf2e-…/connections
+
+Jordi: Konto `j-post@hsb-boden.de` → Office 365 Outlook → Verbinden.
+
+**Preis dieser Entscheidung, bewusst getragen.** Der ALM-Entwurf des Handoffs
+— solution-aware mit Connection Reference in HSB-SALES-OS-DEV — gilt in der
+Standardumgebung nicht. Das ist vertretbar: Der Flow ist Draft-only, hält
+keine CRM-Daten und liest keine Dataverse-Tabellen; das SSOT bleibt das Sheet.
+ALM-Härtung ist eine spätere, eigene Phase.
+
+**Wenn ALM doch jetzt gefordert ist**, ist die Antwort nicht das
+Developer-Environment, sondern eine **Sandbox- oder Production-Umgebung**
+(kostenpflichtiger Plan). Nur die unterstützen mehrere Maker, Sicherheitsgruppen
+und saubere Solution-Promotion. Das ist ohnehin Punkt P6 des Handoffs.
 
 ---
 
@@ -39,9 +63,9 @@ Link oben. Danach prüfen: Connection-Status `Connected`, Identität exakt
 `j-post@hsb-boden.de`, Connection Reference bindet auf genau diese Verbindung.
 
 ### P1 — Flow importieren
-`HSB_DraftFlow.definition.json` in **HSB-SALES-OS-DEV** anlegen,
-solution-aware, mit Connection Reference. Für Joel ein zweiter Flow mit
-dessen Verbindung — ein Flow läuft immer unter genau einer Verbindung.
+`HSB_DraftFlow.definition.json` in der **Standardumgebung** anlegen
+(Begründung in Abschnitt 1). Für Joel ein zweiter Flow mit dessen Verbindung
+— ein Flow läuft immer unter genau einer Verbindung.
 
 HTTP-POST-URL beider Flows in die Skripteigenschaften eintragen:
 

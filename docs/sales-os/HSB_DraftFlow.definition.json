@@ -1,17 +1,22 @@
 {
   "_kommentar": [
     "Power-Automate-Flow: HSB Sales OS Draft Adapter.",
-    "Genau EINE Outlook-Aktion: Create_event -> nein, sondern DraftEmail (Entwurf erstellen).",
+    "Genau EINE Outlook-Aktion: DraftEmail (Entwurf erstellen).",
     "KEINE Sendeaktion. SendEmailV2, SendDraftEmail und Mail.Send duerfen nicht vorkommen.",
-    "Solution-aware anlegen: Connection Reference statt direkter Connection,",
-    "in Environment HSB-SALES-OS-DEV (67d5e040-da4e-e629-a8c9-9176bd070948).",
+    "Anlegen in der STANDARDUMGEBUNG (Default-8adbbf2e-...).",
+    "NICHT in 67d5e040 (HSB-SALES-OS-DEV): das ist ein Developer-Environment und",
+    "laut Microsoft nur fuer seinen Besitzer gedacht; Joel und Jordi erhalten dort",
+    "beim Anlegen eines Flows einen Berechtigungsfehler.",
     "Der Flow entscheidet nichts: Empfaenger, Text und Flyer kommen fertig aus Apps Script."
   ],
   "definition": {
     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-      "$connections": { "defaultValue": {}, "type": "Object" }
+      "$connections": {
+        "defaultValue": {},
+        "type": "Object"
+      }
     },
     "triggers": {
       "manual": {
@@ -20,21 +25,44 @@
         "inputs": {
           "schema": {
             "type": "object",
-            "required": ["leadId", "batchId", "to", "subject", "bodyHtml"],
+            "required": [
+              "leadId",
+              "batchId",
+              "to",
+              "subject",
+              "bodyHtml"
+            ],
             "properties": {
-              "leadId":   { "type": "string" },
-              "batchId":  { "type": "string" },
-              "to":       { "type": "string" },
-              "subject":  { "type": "string" },
-              "bodyHtml": { "type": "string" },
+              "leadId": {
+                "type": "string"
+              },
+              "batchId": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "bodyHtml": {
+                "type": "string"
+              },
               "attachments": {
                 "type": "array",
                 "items": {
                   "type": "object",
-                  "required": ["Name", "ContentBytes"],
+                  "required": [
+                    "Name",
+                    "ContentBytes"
+                  ],
                   "properties": {
-                    "Name":         { "type": "string" },
-                    "ContentBytes": { "type": "string" }
+                    "Name": {
+                      "type": "string"
+                    },
+                    "ContentBytes": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -67,16 +95,24 @@
           "Die Wiederholung steuert Apps Script ueber die vorhandene Draft_ID."
         ],
         "runtimeConfiguration": {
-          "retryPolicy": { "type": "none" }
+          "retryPolicy": {
+            "type": "none"
+          }
         }
       },
       "Antwort": {
         "type": "Response",
         "kind": "Http",
-        "runAfter": { "Entwurf_erstellen": ["Succeeded"] },
+        "runAfter": {
+          "Entwurf_erstellen": [
+            "Succeeded"
+          ]
+        },
         "inputs": {
           "statusCode": 200,
-          "headers": { "Content-Type": "application/json" },
+          "headers": {
+            "Content-Type": "application/json"
+          },
           "body": {
             "status": "DRAFTED",
             "leadId": "@triggerBody()?['leadId']",
@@ -89,10 +125,18 @@
       "Antwort_Fehler": {
         "type": "Response",
         "kind": "Http",
-        "runAfter": { "Entwurf_erstellen": ["Failed", "Skipped", "TimedOut"] },
+        "runAfter": {
+          "Entwurf_erstellen": [
+            "Failed",
+            "Skipped",
+            "TimedOut"
+          ]
+        },
         "inputs": {
           "statusCode": 502,
-          "headers": { "Content-Type": "application/json" },
+          "headers": {
+            "Content-Type": "application/json"
+          },
           "body": {
             "status": "DRAFT_FAILED",
             "leadId": "@triggerBody()?['leadId']",
