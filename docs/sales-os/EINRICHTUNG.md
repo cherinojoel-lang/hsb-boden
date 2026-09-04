@@ -16,6 +16,8 @@ Umgebung: **`Default-8adbbf2e-…`** (die Standardumgebung).
     https://make.powerautomate.com/environments/Default-8adbbf2e-…/connections
 
 Konto `j-post@hsb-boden.de` → Office 365 Outlook → Verbinden.
+Danach die entstandene Verbindung mit Joel teilen. Mehr muss Jordi nicht tun —
+den Flow baut Joel (siehe Schritt 2).
 
 > Nicht `67d5e040-…` (HSB-SALES-OS-DEV). Das ist ein Developer-Environment;
 > Microsoft lässt dort nur den Besitzer arbeiten, und Joel wie Jordi bekommen
@@ -23,11 +25,25 @@ Konto `j-post@hsb-boden.de` → Office 365 Outlook → Verbinden.
 > erstellen". In der Standardumgebung wird jeder Benutzer automatisch Maker —
 > dort lief auch der erfolgreiche Testflow vom 03.09.
 
-## 2. Flows anlegen
+## 2. Flows anlegen — beide unter Joel
 
 `HSB_DraftFlow.definition.json` in der Standardumgebung importieren —
-**zweimal**, einmal mit Jordis und einmal mit Joels Verbindung. Ein Flow läuft
-immer unter genau einer Verbindung.
+**zweimal**: einmal mit Joels, einmal mit Jordis Outlook-Verbindung. Ein Flow
+läuft immer unter genau einer Verbindung.
+
+**Beide Flows gehören Joel.** Jordi steuert nur seine Verbindung bei, die er
+in Schritt 1 anlegt und anschließend mit Joel teilt.
+
+Grund: Der HTTP-Trigger ist ein Premium-Feature, und ein Gastbenutzer braucht
+für Power Automate eine eigene Lizenz — für Premium-Funktionen entsprechend
+eine Premium-Lizenz, die eine Office-seeded Lizenz aus dem Heimat-Tenant nicht
+abdeckt. Microsoft trennt das aber sauber: *"Connections are independent from
+license checks. You can have multiple user connections in a flow, but the flow
+always runs in the context of primary owner."*
+
+Gehört der Flow also Joel, läuft er unter Joels Lizenz — Jordi braucht keine
+Premium-Lizenz und muss keinen Flow besitzen. Seine Beteiligung ist genau eine
+Anmeldung.
 
 Die beiden HTTP-POST-URLs in die Skripteigenschaften eintragen:
 
